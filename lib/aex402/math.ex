@@ -46,18 +46,28 @@ defmodule AeX402.Math do
   @spec calc_d(non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
           {:ok, non_neg_integer()} | {:error, :failed_to_converge}
   def calc_d(x, y, amp) do
-    s = x + y
-
-    if s == 0 do
+    # Guard against division by zero
+    if x == 0 or y == 0 do
       {:ok, 0}
     else
-      ann = amp * 4  # A * n^n where n=2
+      s = x + y
 
-      calc_d_iterate(s, ann, x, y, s, @newton_iterations)
+      if s == 0 do
+        {:ok, 0}
+      else
+        ann = amp * 4  # A * n^n where n=2
+
+        # Guard against zero amp
+        if ann == 0 do
+          {:error, :zero_amp}
+        else
+          calc_d_iterate(s, ann, x, y, s, @newton_iterations)
+        end
+      end
     end
   end
 
-  defp calc_d_iterate(_s, _ann, _x, _y, d, 0), do: {:error, :failed_to_converge}
+  defp calc_d_iterate(_s, _ann, _x, _y, _d, 0), do: {:error, :failed_to_converge}
 
   defp calc_d_iterate(s, ann, x, y, d, remaining) do
     # d_p = d^3 / (4 * x * y)
@@ -67,13 +77,19 @@ defmodule AeX402.Math do
     # d_new = (ann * s + d_p * 2) * d / ((ann - 1) * d + 3 * d_p)
     num = (ann * s + d_p * 2) * d
     denom = (ann - 1) * d + d_p * 3
-    d_new = div(num, denom)
 
-    # Check convergence (within 1 unit)
-    if abs(d_new - d) <= 1 do
-      {:ok, d_new}
+    # Guard against division by zero
+    if denom == 0 do
+      {:error, :zero_denom}
     else
-      calc_d_iterate(s, ann, x, y, d_new, remaining - 1)
+      d_new = div(num, denom)
+
+      # Check convergence (within 1 unit)
+      if abs(d_new - d) <= 1 do
+        {:ok, d_new}
+      else
+        calc_d_iterate(s, ann, x, y, d_new, remaining - 1)
+      end
     end
   end
 
