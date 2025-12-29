@@ -120,31 +120,47 @@ defmodule AeX402.Math do
   @spec calc_y(non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
           {:ok, non_neg_integer()} | {:error, :failed_to_converge}
   def calc_y(x_new, d, amp) do
-    ann = amp * 4
+    # Guard against division by zero
+    if x_new == 0 do
+      {:error, :zero_input}
+    else
+      ann = amp * 4
 
-    # c = d^3 / (4 * x_new * ann)
-    c = div(d * d, x_new * 2)
-    c = div(c * d, ann * 2)
+      # Guard against zero amp
+      if ann == 0 do
+        {:error, :zero_amp}
+      else
+        # c = d^3 / (4 * x_new * ann)
+        c = div(d * d, x_new * 2)
+        c = div(c * d, ann * 2)
 
-    # b = x_new + d / ann
-    b = x_new + div(d, ann)
+        # b = x_new + d / ann
+        b = x_new + div(d, ann)
 
-    calc_y_iterate(c, b, d, d, @newton_iterations)
+        calc_y_iterate(c, b, d, d, @newton_iterations)
+      end
+    end
   end
 
-  defp calc_y_iterate(_c, _b, _d, y, 0), do: {:error, :failed_to_converge}
+  defp calc_y_iterate(_c, _b, _d, _y, 0), do: {:error, :failed_to_converge}
 
   defp calc_y_iterate(c, b, d, y, remaining) do
     # y_new = (y^2 + c) / (2y + b - d)
     num = y * y + c
     denom = 2 * y + b - d
-    y_new = div(num, denom)
 
-    # Check convergence (within 1 unit)
-    if abs(y_new - y) <= 1 do
-      {:ok, y_new}
+    # Guard against division by zero
+    if denom == 0 do
+      {:error, :zero_denom}
     else
-      calc_y_iterate(c, b, d, y_new, remaining - 1)
+      y_new = div(num, denom)
+
+      # Check convergence (within 1 unit)
+      if abs(y_new - y) <= 1 do
+        {:ok, y_new}
+      else
+        calc_y_iterate(c, b, d, y_new, remaining - 1)
+      end
     end
   end
 
