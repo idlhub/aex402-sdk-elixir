@@ -1,0 +1,25 @@
+# Dependencies
+deps/
+_build/
+mix.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Elixir
+*.beam
+*.ez
+erl_crash.dump
+
+# Coverage
+cover/
+
+# Documentation
+doc/
